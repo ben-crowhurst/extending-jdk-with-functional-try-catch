@@ -4017,6 +4017,32 @@ public class JavacParser implements Parser {
             if (token.kind == LBRACE) {
                 body = block();
                 defaultValue = null;
+
+                if (token.kind == CATCH) {
+                    ListBuffer<JCCatch> catchers = new ListBuffer<>();
+                    JCBlock finalizer = null;
+                    if (token.kind == CATCH || token.kind == FINALLY) {
+                        while (token.kind == CATCH) catchers.append(catchClause());
+                        if (token.kind == FINALLY) {
+                            nextToken();
+                            finalizer = block();
+                        }
+                    }
+                    JCTry tryStatement = F.at(pos).Try(body, catchers.toList(), finalizer);
+
+                    ListBuffer<JCStatement> statements = new ListBuffer<>();
+                    statements.addAll(List.of(tryStatement));
+
+                    JCBlock tryBody = F.at(pos).Block(0, statements.toList());
+                    tryBody.endpos = token.pos;
+
+                    JCMethodDecl result =
+                            toP(F.at(pos).MethodDef(mods, name, type, typarams,
+                                            receiverParam, params, thrown,
+                                            tryBody, defaultValue));
+                    attach(result, dc);
+                    return result;
+                }
             } else {
                 if (token.kind == DEFAULT) {
                     accept(DEFAULT);
