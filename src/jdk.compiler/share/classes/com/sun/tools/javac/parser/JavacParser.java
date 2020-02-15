@@ -463,6 +463,12 @@ public class JavacParser implements Parser {
     /** Report an illegal start of expression/type error at given position.
      */
     JCExpression illegal(int pos) {
+        StackTraceElement[] elements = Thread.currentThread().getStackTrace();
+        for (int i = 1; i < elements.length; i++) {
+            StackTraceElement s = elements[i];
+            System.out.println("\tat " + s.getClassName() + "." + s.getMethodName() + "(" + s.getFileName() + ":" + s.getLineNumber() + ")");
+        }
+
         setErrorEndPos(pos);
         if ((mode & EXPR) != 0)
             return syntaxError(pos, Errors.IllegalStartOfExpr);
